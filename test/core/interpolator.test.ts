@@ -119,6 +119,18 @@ describe('interpolate', () => {
     expect(result.message.active).toBe(true);
     expect(result.message.nothing).toBeNull();
   });
+
+  it('throws on circular variable defaults', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      variables: {
+        a: { default: '{{b}}' },
+        b: { default: '{{a}}' },
+      },
+      message: { text: '{{a}}' },
+    };
+    expect(() => interpolate(template, {})).toThrow(/circular/i);
+  });
 });
 
 describe('collectTokens', () => {

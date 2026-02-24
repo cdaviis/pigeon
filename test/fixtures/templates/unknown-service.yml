@@ -1,0 +1,7 @@
+version: '1'
+name: Unknown Service Template
+destination:
+  service: carrier-pigeon
+  channel: '#test'
+message:
+  text: Hello

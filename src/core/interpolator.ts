@@ -9,6 +9,7 @@ interface InterpolationContext {
   env: Record<string, string>;
   templateName: string;
   declaredVariables: Record<string, { default?: string; required?: boolean }>;
+  resolving: Set<string>;
 }
 
 const BUILTINS: Record<string, () => string> = {
@@ -40,8 +41,13 @@ function resolveToken(token: string, ctx: InterpolationContext): string {
   // Check for declared default
   const decl = ctx.declaredVariables[name];
   if (decl?.default !== undefined) {
-    // Defaults can themselves contain tokens — resolve them too
-    return resolveTokens(decl.default, ctx);
+    if (ctx.resolving.has(name)) {
+      throw new Error(`Circular variable reference detected: "${name}" references itself through defaults`);
+    }
+    ctx.resolving.add(name);
+    const resolved = resolveTokens(decl.default, ctx);
+    ctx.resolving.delete(name);
+    return resolved;
   }
 
   // Missing required variable
@@ -83,6 +89,7 @@ export function interpolate(
     env: env as Record<string, string>,
     templateName: template.name,
     declaredVariables: template.variables ?? {},
+    resolving: new Set(),
   };
 
   const interpolatedDestination = walkAndInterpolate(template.destination, ctx) as PigeonTemplate['destination'];

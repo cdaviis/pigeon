@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/cdaviis/pigeon/compare/v1.0.0...v1.1.0) (2026-02-24)
+
+
+### Features
+
+* **ci:** integrate PigeonJS Slack notifications and rename package ([7ff0a51](https://github.com/cdaviis/pigeon/commit/7ff0a51ffd5af577873709c31b02ac209b5f89ed))
+
 ## 1.0.0 (2026-02-24)
 
 

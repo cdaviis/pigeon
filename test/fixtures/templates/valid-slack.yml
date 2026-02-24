@@ -1,0 +1,22 @@
+version: '1'
+name: Test Slack Template
+description: Used in tests
+
+destination:
+  service: slack
+  channel: '#test'
+
+variables:
+  greeting:
+    description: Greeting text
+    required: true
+  name:
+    description: Name to greet
+    default: World
+
+message:
+  blocks:
+    - type: section
+      text:
+        type: mrkdwn
+        text: '{{greeting}}, {{name}}!'

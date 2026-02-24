@@ -1,0 +1,6 @@
+name: Missing Version
+destination:
+  service: slack
+  channel: '#test'
+message:
+  text: hello

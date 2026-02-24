@@ -70,6 +70,11 @@ web_modules/
 .env.*
 !.env.example
 
+# pigeon local credential config files
+.pigeon.yml
+.pigeon.yaml
+.pigeon.json
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

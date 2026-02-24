@@ -88,4 +88,20 @@ describe('validateVariables', () => {
     };
     expect(() => validateVariables(template, {})).toThrow(/foo.*bar|bar.*foo/);
   });
+
+  it('empty string satisfies required var', () => {
+    const template: PigeonTemplate = {
+      ...validTemplate,
+      variables: { user: { required: true } },
+    };
+    expect(() => validateVariables(template, { user: '' })).not.toThrow();
+  });
+
+  it('required + default: does not require --var', () => {
+    const template: PigeonTemplate = {
+      ...validTemplate,
+      variables: { env: { required: true, default: 'staging' } },
+    };
+    expect(() => validateVariables(template, {})).not.toThrow();
+  });
 });

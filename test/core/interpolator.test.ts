@@ -131,6 +131,116 @@ describe('interpolate', () => {
     };
     expect(() => interpolate(template, {})).toThrow(/circular/i);
   });
+
+  // ─── Edge cases (see docs/edge-cases.md) ───────────────────────────────────
+
+  it('built-ins cannot be overridden by vars', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      message: { text: '{{now}}' },
+    };
+    const result = interpolate(template, { now: 'custom' });
+    expect(result.message.text).not.toBe('custom');
+    expect(new Date(result.message.text as string).toISOString()).toBe(result.message.text);
+  });
+
+  it('caller vars override env for same name (e.g. USER)', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      message: { text: '{{USER}}' },
+    };
+    const result = interpolate(template, { USER: 'alice' }, { USER: 'env-user' });
+    expect(result.message.text).toBe('alice');
+  });
+
+  it('ALL_CAPS token with no env and no default throws MissingVariableError', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      message: { text: '{{NOT_SET_ENV}}' },
+    };
+    expect(() => interpolate(template, {}, {})).toThrow(/NOT_SET_ENV|Missing required variable/);
+  });
+
+  it('empty string is valid for required vars', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      variables: { user: { required: true } },
+      message: { text: '{{user}}' },
+    };
+    const result = interpolate(template, { user: '' });
+    expect(result.message.text).toBe('');
+  });
+
+  it('empty or whitespace-only token throws for missing variable', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      message: { text: 'x{{  }}y' },
+    };
+    expect(() => interpolate(template, {})).toThrow(/Missing required variable|missing/);
+  });
+
+  it('required + default: default is used when var not provided', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      variables: { env: { required: true, default: 'staging' } },
+      message: { text: '{{env}}' },
+    };
+    const result = interpolate(template, {});
+    expect(result.message.text).toBe('staging');
+  });
+
+  it('interpolated key can resolve to empty string', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      message: { '{{key}}': 'v' },
+    };
+    const result = interpolate(template, { key: '' });
+    expect((result.message as Record<string, unknown>)['']).toBe('v');
+  });
+
+  it('case sensitivity: User vs user are different', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      variables: { User: { default: 'DeclaredUser' } },
+      message: { text: '{{User}} {{user}}' },
+    };
+    const result = interpolate(template, { user: 'cli-user' });
+    expect(result.message.text).toBe('DeclaredUser cli-user');
+  });
+
+  it('undeclared token in template throws MissingVariableError', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      message: { text: '{{undeclared}}' },
+    };
+    expect(() => interpolate(template, {})).toThrow(/undeclared|Missing required variable/);
+  });
+
+  it('mixed case {{User}} does not read env USER', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      message: { text: '{{User}}' },
+    };
+    expect(() => interpolate(template, {}, { USER: 'from-env' })).toThrow(/User|Missing required variable/);
+  });
+
+  it('value with equals sign: var k=a=b=c resolves to a=b=c', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      message: { text: '{{k}}' },
+    };
+    const result = interpolate(template, { k: 'a=b=c' });
+    expect(result.message.text).toBe('a=b=c');
+  });
+
+  it('env value undefined (e.g. custom env in tests) is stringified as "undefined"', () => {
+    const template: PigeonTemplate = {
+      ...baseTemplate,
+      message: { text: '{{FOO}}' },
+    };
+    const result = interpolate(template, {}, { FOO: undefined as unknown as string });
+    expect(result.message.text).toBe('undefined');
+  });
 });
 
 describe('collectTokens', () => {
